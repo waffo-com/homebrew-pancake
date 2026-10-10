@@ -22,12 +22,36 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - run: node --test scripts/*.test.mjs
+      - name: Detect bootstrap tap
+        id: state
+        shell: bash
+        run: |
+          if [ -f Formula/pancake.rb ]; then
+            echo 'bootstrap=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'bootstrap=true' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.state.outputs.bootstrap == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: waffo-com/waffo-pancake-cli
+          ref: main
+          path: cli-source
+          persist-credentials: false
+      - if: steps.state.outputs.bootstrap == 'true'
+        name: Build actual CLI archive for bootstrap installation test
+        working-directory: cli-source
+        run: |
+          npm ci
+          npm run build
+          npm run pack:release
       - name: Check formula when a stable release exists
         shell: bash
         run: |
-          if [ ! -f Formula/pancake.rb ]; then
-            echo "Bootstrap tap: waiting for the first stable npm release."
-            exit 0
-          fi
           export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-          bash scripts/test-formula.sh Formula/pancake.rb
+          if [ -f Formula/pancake.rb ]; then
+            bash scripts/test-formula.sh Formula/pancake.rb
+          else
+            node scripts/local-formula.mjs cli-source/artifacts
+            bash scripts/test-formula.sh candidate/pancake.rb
+          fi

@@ -18,6 +18,8 @@ The qualified name avoids tap conflicts; `brew install pancake` also works when 
 
 Prereleases are excluded. An unpublished package produces a bootstrap no-op. Network errors, mismatched hashes, unexpected origins and downgrades fail the workflow. Failed installation leaves the existing formula unchanged.
 
+Before the first stable release, Tap CI builds the current public CLI source and installs its actual local tarball through a temporary formula on macOS/Linux. This verifies Homebrew wiring without publishing a placeholder package or committing a fake registry URL.
+
 ## Maintainers
 
 ```sh
