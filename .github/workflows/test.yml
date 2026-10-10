@@ -1,0 +1,33 @@
+name: Tap CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: node --test scripts/*.test.mjs
+      - name: Check formula when a stable release exists
+        shell: bash
+        run: |
+          if [ ! -f Formula/pancake.rb ]; then
+            echo "Bootstrap tap: waiting for the first stable npm release."
+            exit 0
+          fi
+          export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+          bash scripts/test-formula.sh Formula/pancake.rb

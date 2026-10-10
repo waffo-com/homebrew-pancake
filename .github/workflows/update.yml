@@ -1,0 +1,78 @@
+name: Update from npm
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: update-stable-formula
+  cancel-in-progress: false
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.update.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: node --test scripts/*.test.mjs
+      - id: update
+        run: node scripts/update.mjs
+      - if: steps.update.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tested-formula
+          path: Formula/pancake.rb
+          if-no-files-found: error
+  install:
+    needs: candidate
+    if: needs.candidate.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tested-formula
+          path: Formula
+      - shell: bash
+        run: |
+          export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+          bash scripts/test-formula.sh Formula/pancake.rb
+  commit:
+    needs: [candidate, install]
+    if: needs.candidate.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: tested-formula
+          path: candidate
+      - name: Commit only the formula that passed both platform tests
+        shell: bash
+        run: |
+          git pull --ff-only origin main
+          mkdir -p Formula
+          cp candidate/pancake.rb Formula/pancake.rb
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Formula/pancake.rb
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'chore: update Pancake formula from verified npm release'
+          git push origin HEAD:main
