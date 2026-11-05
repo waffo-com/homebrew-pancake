@@ -10,7 +10,7 @@ brew install waffo-com/pancake/pancake
 pancake --help
 ```
 
-The qualified name avoids tap conflicts; `brew install pancake` also works when unambiguous. Homebrew installs Node.js 22 and the same npm archive used by npm/npx.
+The qualified name avoids tap conflicts; `brew install pancake` also works when unambiguous. Homebrew installs Node.js 22 and the same npm archive used by npm/npx. The executable wrapper selects Homebrew's Node.js directly, so an existing Node.js installation or PATH change is unnecessary. Installation tests also run with an empty external PATH.
 
 ## Automatic updates
 
