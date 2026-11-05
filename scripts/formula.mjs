@@ -28,7 +28,7 @@ class Pancake < Formula
   def install
     system "npm", "install", *std_npm_args
     bin.install Dir["#{libexec}/bin/*"]
-    bin.env_script_all_files libexec/"bin", PATH: "#{Formula["node@22"].opt_bin}:$PATH"
+    bin.env_script_all_files libexec/"bin", PATH: "#{formula_opt_bin("node@22")}:$PATH"
   end
 
   test do

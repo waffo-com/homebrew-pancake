@@ -16,7 +16,7 @@ const metadata = { name: "@waffo/pancake-cli", version: "1.2.3", dist: {
 test("verified npm archive produces Node formula and executable checks", () => {
   const formula = renderFormula(metadata, verifyArchive(metadata, bytes));
   assert.match(formula, /depends_on "node@22"/);
-  assert.match(formula, /bin\.env_script_all_files libexec\/"bin", PATH: "#\{Formula\["node@22"\]\.opt_bin\}:\$PATH"/);
+  assert.match(formula, /bin\.env_script_all_files libexec\/"bin", PATH: "#\{formula_opt_bin\("node@22"\)\}:\$PATH"/);
   assert.match(formula, /pancake --version/);
   assert.match(formula, /pancake --help/);
 });
