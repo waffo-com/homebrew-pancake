@@ -10,3 +10,12 @@ brew install --build-from-source waffo-com/pancake/pancake
 brew test waffo-com/pancake/pancake
 pancake --help
 pancake --version
+installed_bin=$(brew --prefix waffo-com/pancake/pancake)/bin/pancake
+empty_path=$(mktemp -d)
+trap 'rmdir "$empty_path"' EXIT
+if PATH="$empty_path" command -v node; then
+  echo 'Clean installation check must not contain an external Node.js runtime.' >&2
+  exit 1
+fi
+PATH="$empty_path" "$installed_bin" --help
+PATH="$empty_path" "$installed_bin" --version

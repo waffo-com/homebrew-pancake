@@ -11,9 +11,11 @@ export function verifyArchive(metadata, bytes) {
 }
 
 export function renderFormula(metadata, sha256) {
-  if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(metadata.version)) throw new Error("Invalid stable version");
+  if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:alpha|beta|rc)\.(0|[1-9]\d*))?$/.test(metadata.version)) throw new Error("Invalid CLI version");
   if (!/^[a-f0-9]{64}$/.test(sha256)) throw new Error("Invalid SHA256");
   return `# Generated from the verified npm archive. Do not edit version or hash manually.
+require "json"
+
 class Pancake < Formula
   desc "Developer CLI for Waffo Pancake"
   homepage "https://github.com/waffo-com/waffo-pancake-cli"
@@ -25,12 +27,17 @@ class Pancake < Formula
 
   def install
     system "npm", "install", *std_npm_args
-    bin.install_symlink Dir["#{libexec}/bin/*"]
+    bin.install Dir["#{libexec}/bin/*"]
+    bin.env_script_all_files libexec/"bin", PATH: "#{formula_opt_bin("node@22")}:$PATH"
   end
 
   test do
-    assert_equal version.to_s, shell_output("#{bin}/pancake --version").strip
-    assert_match "Usage: pancake", shell_output("#{bin}/pancake --help")
+    result = JSON.parse(shell_output("#{bin}/pancake --version --json"))
+    assert_equal true, result.fetch("ok")
+    assert_equal version.to_s, result.fetch("data").fetch("version")
+    help = JSON.parse(shell_output("#{bin}/pancake --help --json"))
+    assert_equal true, help.fetch("ok")
+    assert_match "Usage: pancake", help.fetch("data").fetch("help")
   end
 end
 `;

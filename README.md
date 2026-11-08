@@ -10,7 +10,7 @@ brew install waffo-com/pancake/pancake
 pancake --help
 ```
 
-The qualified name avoids tap conflicts; `brew install pancake` also works when unambiguous. Homebrew installs Node.js 22 and the same npm archive used by npm/npx.
+The qualified name avoids tap conflicts; `brew install pancake` also works when unambiguous. Homebrew installs Node.js 22 and the same npm archive used by npm/npx. The executable wrapper selects Homebrew's Node.js directly, so an existing Node.js installation or PATH change is unnecessary. Installation tests also run with an empty external PATH.
 
 ## Automatic updates
 
@@ -18,7 +18,7 @@ The qualified name avoids tap conflicts; `brew install pancake` also works when 
 
 Prereleases are excluded. An unpublished package produces a bootstrap no-op. Network errors, mismatched hashes, unexpected origins and downgrades fail the workflow. Failed installation leaves the existing formula unchanged.
 
-Before the first stable release, Tap CI builds the current public CLI source and installs its actual local tarball through a temporary formula on macOS/Linux. This verifies Homebrew wiring without publishing a placeholder package or committing a fake registry URL.
+Before the first stable release, Tap CI checks the tap tooling and explicitly reports installation as pending. It does not access private CLI source. The CLI's own CI uses its tested archive and a pinned public tap revision to install a local-only candidate on macOS/Linux. Local candidates may include CLI prereleases; the stable npm updater still rejects them. Neither path publishes a placeholder package or commits a local candidate as a production formula.
 
 ## Maintainers
 
