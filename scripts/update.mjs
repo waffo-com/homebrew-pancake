@@ -9,6 +9,15 @@ if (response.status === 404) {
 }
 if (!response.ok) throw new Error(`npm metadata HTTP ${response.status}`);
 const metadata = await response.json();
+if (metadata.name !== "@waffo/pancake-cli") throw new Error("Unexpected package name");
+// npm can assign latest to the first published prerelease. Never promote it to Homebrew.
+if (/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-(?:alpha|beta|rc)\.(0|[1-9]\d*)$/.test(metadata.version)) {
+  const expected = `https://registry.npmjs.org/@waffo/pancake-cli/-/pancake-cli-${metadata.version}.tgz`;
+  if (metadata.dist?.tarball !== expected) throw new Error("Unexpected tarball origin/path");
+  console.log(`Skipping prerelease ${metadata.version}; the stable formula is unchanged.`);
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, "changed=false\n");
+  process.exit(0);
+}
 // Validate origin before downloading; verifyArchive checks it again with integrity.
 if (!/^https:\/\/registry\.npmjs\.org\/@waffo\/pancake-cli\/-\/pancake-cli-\d+\.\d+\.\d+\.tgz$/.test(metadata.dist?.tarball || "")) throw new Error("Unexpected npm URL/version");
 const responseBytes = await fetch(metadata.dist.tarball, { redirect: "error", signal: AbortSignal.timeout(60000) });

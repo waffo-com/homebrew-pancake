@@ -16,9 +16,9 @@ The qualified name avoids tap conflicts; `brew install pancake` also works when 
 
 `Update from npm` checks npm's `latest` channel every six hours or via Actions workflow dispatch. It verifies SHA-512 integrity, computes SHA-256, installs/tests on macOS and Linux, then commits only the tested formula. No cross-repository token is required. GitHub schedules may be delayed; dispatch manually for immediate synchronization.
 
-Prereleases are excluded. An unpublished package produces a bootstrap no-op. Network errors, mismatched hashes, unexpected origins and downgrades fail the workflow. Failed installation leaves the existing formula unchanged.
+Prereleases (`alpha.N`, `beta.N`, `rc.N`) are skipped without downloading an archive or changing the stable formula, even if npm points `latest` at the first candidate. An unpublished package also produces a no-op. Network errors, mismatched hashes, unexpected origins and downgrades fail the workflow. Failed installation leaves the existing formula unchanged.
 
-Before the first stable release, Tap CI checks the tap tooling and explicitly reports installation as pending. It does not access private CLI source. The CLI's own CI uses its tested archive and a pinned public tap revision to install a local-only candidate on macOS/Linux. Local candidates may include CLI prereleases; the stable npm updater still rejects them. Neither path publishes a placeholder package or commits a local candidate as a production formula.
+Before the first stable release, Tap CI checks the tap tooling and explicitly reports installation as pending. It does not access private CLI source. The CLI's own CI uses its tested archive and a pinned public tap revision to install a local-only candidate on macOS/Linux. Local candidates may include CLI prereleases; the stable npm updater skips them. Neither path publishes a placeholder package or commits a local candidate as a production formula.
 
 ## Maintainers
 
